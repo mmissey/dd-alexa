@@ -32,7 +32,7 @@ functions:
   #   name: "dd-backfill"
   #   handler: backfill.handler
   #   environment:
-  #     SLACK_API_KEY: xoxp-4015048983-15333529265-207257004931-67b51ae67bb943d99c317f6439466d92 
+  #     SLACK_API_KEY: ${env:SLACK_API_KEY}
 
 # resources:
 #   Resources:
