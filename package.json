@@ -1,0 +1,16 @@
+{
+  "name": "@vevo/dd-alexa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "y",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "alexa-sdk": "^1.0.11",
+    "aws-sdk": "^2.88.0",
+    "node-fetch": "^1.7.1",
+  }
+}
