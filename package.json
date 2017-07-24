@@ -11,6 +11,6 @@
   "dependencies": {
     "alexa-sdk": "^1.0.11",
     "aws-sdk": "^2.88.0",
-    "node-fetch": "^1.7.1",
+    "node-fetch": "^1.7.1"
   }
 }

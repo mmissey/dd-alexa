@@ -29,7 +29,7 @@ function fetchSlackEndpoint(endpoint, body){
         }
     }).then((json)=>{
         if(!json.ok){
-            return handleError(intent, session, callback);
+            return Promise.reject(json);
         }else{
             return json;
         }
