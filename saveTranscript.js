@@ -4,7 +4,9 @@ const utils = require('./utils.js');
 const AWS = require('aws-sdk');
 const styles = require('./styles.js').stylesheet
 let userLookup = {};
-
+let stats = {
+	users: 0
+};
 function handleEvent (event, context, callback) {
 	const channelId = event.channel_id;
 	const oldestTimestamp = event.oldest_ts || 0;
@@ -40,7 +42,8 @@ function getUserInfo(userId){
 	if(userLookup[userId]){
 		return Promise.resolve(userLookup[userId])
 	}else {
-		return utils.fetchSlackEndpoint("/users.info", {
+		stats.users++;
+		return userLookup[userId] = utils.fetchSlackEndpoint("/users.info", {
 			user: userId
 		}).then((data) => {
 			if(data.ok){
