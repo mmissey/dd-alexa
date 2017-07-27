@@ -14,7 +14,7 @@ function handleEvent (event, context, callback) {
 	const numOfMessages = event.message_count || 1000;
 
 	if(channelId){
-		getChannelMessages({
+		return getChannelMessages({
 			channel : channelId,
 			oldest  : oldestTimestamp, 
 			latest  : latestTimestamp,
@@ -29,10 +29,12 @@ function getChannelMessages(options) {
 	utils.fetchSlackEndpoint("/channels.history", Object.assign(options, {
 		inclusive: true
 	})).then((data) => {
-		console.log("<html>");
-		console.log("<head>"+ styles +"</head>");
-		console.log(parseMessages(data && data.messages));
-		console.log("</html>");
+		parseMessages(data && data.messages).then((messagesHTML) => {
+			console.log("<html>");
+			console.log("<head>"+ styles +"</head>");
+			console.log(messagesHTML)
+			console.log("</html>");
+		})
 	}).catch((err) => {
 		console.log(err);
 	});
@@ -61,60 +63,145 @@ function parseMessages(messages) {
 	if(!messages) {
 		return;
 	}
+	// Set a starting date. Most resent message timestamp
 	let currentDay = new Date(messages[0].ts*1000).toLocaleDateString('en-US');
-	messages.forEach((message) => {
-		let text = parseUsernames(message.text);
-		text = parseCommands(text);
+	let messagePromises = [];
+	messages.forEach((message, index) => {
 		let subtype = message.subtype || '';
 		let date = new Date(message.ts*1000)
-		let time = date.toLocaleTimeString()
+		let time = date.toLocaleTimeString();
+		let html = "";
+		// When the day changes. Place a timestamp
 		if(date.toLocaleDateString('en-US') != currentDay){
-			messagesHTML.unshift("<div class='day_marker'>" + currentDay + "</div>");
+			html += "<div class='day_marker'>" + currentDay + "</div>";
 			currentDay = date.toLocaleDateString('en-US');
 		}
-		let html = 	"<div class='message " + subtype + "'>" +
-						"<div class='profPic'>" +
-							"<img src='https://placekitten.com/42/42' />" + 
-						"</div>" +
-						"<div class='info'>" +
-				   			"<div>" +
-				   				"<span class='poster'>"+(message.user || message.username)+"</span>" +
-				   				"<span class='timestamp'>"+time+"</span>" +
-				   			"</div>" +
-				   			"<div class='content'>"+text+"</div>" +
-				   		"</div>" +
-				   	"</div>";
-		messagesHTML.unshift(html);
+		if(message.user){
+			messagePromises.push(
+				getUserInfo(message.user).then((author) => {  // First get author info
+					return parseUsernames(message.text) // Get info for any user mentioned in the message
+					.then(parseMentions)				//Pull out @channel, @here, etc
+					.then(parseChannels)				//Convert to link to channel
+					.then((text) => {					// then html
+					return html + buildMessageHTML(author.name, author.profile.image_72, subtype, time, text);
+				});
+			}));
+		}else if(message.username){
+			messagePromises.push(
+				parseUsernames(message.text)
+				.then(parseMentions)
+				.then(parseChannels)
+				.then((text) => {
+					return html + buildMessageHTML(message.username, getBotImage(), subtype, time, text);
+				})
+			);
+		}
 	});
+
 	let firstTime = messages[messages.length-1].ts;
-	messagesHTML.unshift("<div class='day_marker'>" + new Date(firstTime*1000).toLocaleDateString('en-US') + "</div>");
-	return "<body>" + messagesHTML.join("\n") + "</body>";
+	messagePromises.push(Promise.resolve(("<div class='day_marker'>" + new Date(firstTime*1000).toLocaleDateString('en-US') + "</div>")));
+	return Promise.all(messagePromises).then((messages) => {
+		return "<body>" +
+			"<div className='main'>" +
+				messages.reverse().join('\n') + 
+			"</div>" +
+			stats.users +
+		"</body>";
+	});
+}
+
+function buildMessageHTML(username, img, type, time, text ){
+//build the message html
+ 	return "<div class='message " + type + "'>" +
+				"<div class='profPic'>" +
+					"<img src='" + img + "' />" +
+				"</div>" +
+				"<div class='info'>" +
+		   			"<div>" +
+		   				"<span class='poster'>" + username + "</span>" +
+		   				"<span class='timestamp'>" + time + "</span>" +
+		   			"</div>" +
+		   			"<div class='content'>" + text + "</div>" +
+		   		"</div>" +
+		   	"</div>";
+}
+
+function getBotImage(userId){
+	return "https://placekitten.com/42/42";
 }
 
 function parseUsernames(text) {
 	let retText = text.substr(0);
-	let regex = /<@[A-Z0-9]+[|]([a-zA-Z0-9\.\-_]+)>/g;
+	let regex = /<@([A-Z0-9]+)\|?([a-zA-Z0-9\.\-_]+)?>/g;
 	let match;
+	let usernameRequests = [];
 	while((match = regex.exec(text)) !== null){
-		retText = retText.replace(match[0], "<span class='username'>@"+match[1]+"</span>");
+		if(match[2]){
+			usernameRequests.push(Promise.resolve({
+				replace: match[0],
+				username: match[2]
+			}));
+		}else{
+			let replace = match[0];
+			usernameRequests.push(getUserInfo(match[1]).then((userInfo) => {
+				return {
+					replace,
+					username: userInfo.name
+				}
+			}))
+		}
 	}
-	return retText;
+	return Promise.all(usernameRequests).then((resolvedUsernames) => {
+		for(let i=0;i<resolvedUsernames.length;i++){
+			retText = retText.replace(resolvedUsernames[i].replace, getUsernameLink(resolvedUsernames[i].username));
+		};
+		return retText;
+	});
 }
 
-function parseCommands(text) {
+
+function parseMentions(text) {
 	let retText = text.substr(0);
 	let regex = /<!([a-zA-Z0-9]+)>/g;
 	let match;
 	while((match = regex.exec(text)) !== null){
-		retText = retText.replace(match[0], "`@"+match[1]+"`");
+		retText = retText.replace(match[0], "<span class='mention'>@"+match[1]+"</span>");
 	}
-	return retText;
+	return Promise.resolve(retText);
 }
 
+function parseChannels(text) {
+	let retText = text.substr(0);
+	let regex = /<#([A-Z0-9]+)\|([a-zA-Z0-9\.\-_]+)?>/g;
+	let match;
+	while((match = regex.exec(text)) !== null){
+		retText = retText.replace(match[0], getChannelLink(match[1], match[2]));
+	}
+	return Promise.resolve(retText);
+}
+
+function getChannelInfo(channelId){
+	return utils.fetchSlackEndpoint('channels.info', {
+        channel: channelId
+    }).then((res) => {
+    	if(!res.ok){
+    		return Promise.reject();
+    	}
+    	return res.channel;
+    });
+}
+
+function getChannelLink(channelId, channelName){
+	return "<a class='channel' target='_blank' href='https://denver-devs.slack.com/messages/"+channelId+"'>#"+channelName+"</a>"
+}
+
+function getUsernameLink(username){
+	return "<a class='username' target='_blank' href='https://denver-devs.slack.com/team/"+username+"'>@"+username+"</a>"
+}
 module.exports = {
 	handleEvent
 }
 
 handleEvent({
-	channel_id: "C643L9WG6"
+	channel_id: "C040F1EV7"//"C643L9WG6"//"C040F1EV5"//
 })
