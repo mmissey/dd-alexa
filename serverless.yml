@@ -21,12 +21,17 @@ provider:
 functions:
   sendMessage:
     name: "dd-alexa"
-    handler: handler.handleEvent
+    handler: functions/handler.handleEvent
     environment:
       SLACK_API_KEY: ${env:SLACK_API_KEY}
       SLACK_USERNAME: DD-Alexa
     events:
         - alexaSkill
+  saveTranscript:
+    name: "dd-transcript"
+    handler: functions/saveTranscript.handleEvent
+    environment:
+      SLACK_API_KEY: ${env:SLACK_API_KEY}
 
   # backFill:
   #   name: "dd-backfill"

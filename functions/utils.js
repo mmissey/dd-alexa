@@ -59,6 +59,34 @@ function getSlotFromResponse(slots, key){
 }
 
 
+function sendSns(options) {
+    console.log('sending: ', type, page);
+    return new Promise((resolve, reject) => {
+        const params = {
+            TopicArn: process.env.SNS_TOPIC,
+            MessageAttributes: {
+                Source: {
+                    DataType: 'String',
+                    StringValue: 'DD-ALEXA'
+                }
+            }
+        };
+
+        params.Message = JSON.stringify({ default: JSON.stringify(options) });
+        params.MessageStructure = 'json';
+
+        sns.publish(params, (err, data) => {
+            if (err) {
+                console.log(`failed message send. error = ${err}`);
+                return reject(err);
+            }
+            console.log(`sent message. data = ${JSON.stringify(data)}`);
+            return resolve();
+        });
+    });
+}
+
+
 // ALEXA UTILS 
 
 // --------------- Helpers that build all of the responses -----------------------

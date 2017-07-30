@@ -3,7 +3,7 @@ let utils = require('./utils.js');
 
 module.exports.handleEvent = (event, context, callback) => {
     try {
-        console.log(event)
+        console.log(event);
         console.log(`event.session.application.applicationId=${event.session.application.applicationId}`);
 
         /**
@@ -16,11 +16,11 @@ module.exports.handleEvent = (event, context, callback) => {
         }
         */
 
-        if (event.session.new) {
+        if(event.session.new){
             utils.onSessionStarted({ requestId: event.request.requestId }, event.session);
         }
 
-        if (event.request.type === 'LaunchRequest') {
+        if(event.request.type === 'LaunchRequest') {
             utils.onLaunch(event.request,
                 event.session,
                 (sessionAttributes, speechletResponse) => {
@@ -207,7 +207,7 @@ function archiveChannel(channelId) {
         channel: channelId
     }).then((res) => {
         return res.ok;
-    }
+    });
 }
 
 // Get's the user list for a channel, and performs an action on each user
@@ -244,3 +244,12 @@ function inviteUserToChannel(channelId, user) {
         return res.ok
     });
 }
+
+module.exports.handleEvent({
+    session: {
+        new: true
+    },
+    request: {
+        type: "LaunchRequest"
+    }
+})
