@@ -88,47 +88,28 @@ function sendSns(options) {
     });
 }
 
-function writeXMLtoS3(filename, xml, nfs) {
+function writeHTMLtoS3(filename, html) {
     const bucket = process.env.S3_BUCKET;
-    if (nfs) {
-        nfs.logger.info(`Uploading ${filename} to S3: ${bucket}`);
-    }
+    console.log(`Uploading ${filename} to S3: ${bucket}`);
     const s3 = new AWS.S3({
         params: {
             Bucket: bucket
         }
     });
     return new Promise((resolve, reject) => {
-        zlib.gzip(xml, (error, compData) => {
-            if (error) {
-                console.log(error);
-                reject(error);
+        s3.upload({
+            Key: filename,
+            ContentType: 'text/html',
+            Body: html,
+            ACL: 'public-read'
+        }, (err, data) => {
+            if (err) {
+                console.log(`Error uploading ${filename} to S3. ${JSON.stringify(err)}`);
+                reject();
+            } else {
+                console.log(`Uploaded ${filename} to S3.`);
+                resolve();
             }
-            s3.upload({
-                Key: filename,
-                ContentType: 'application/xml',
-                Body: compData,
-                ACL: 'public-read',
-                ContentEncoding: 'gzip'
-            }, (err, data) => {
-                if (err) {
-                    if (nfs) {
-                        nfs.logger.warn(`Error uploading ${filename} to S3. ${JSON.stringify(err)}`);
-                    }
-                    reject();
-                } else {
-                    if (nfs) {
-                        nfs.logger.info(`Uploaded ${filename} to S3.`);
-                    }
-                    return lib.purgeCache(`${conf.get('sitemapPath')}${filename}`).then((result, purgeError) => {
-                        if (!purgeError) {
-                            resolve();
-                        } else {
-                            reject();
-                        }
-                    });
-                }
-            });
         });
     });
 }
@@ -238,5 +219,6 @@ module.exports = {
     handleSessionEndRequest,
     onSessionEnded,
     handleError,
+    writeHTMLtoS3,
     getSlotFromResponse
 }

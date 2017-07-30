@@ -25,15 +25,16 @@ function handleEvent (event, context, callback) {
 
 
 function getChannelMessages(options) {
-	utils.fetchSlackEndpoint("/channels.history", Object.assign(options, {
+	return utils.fetchSlackEndpoint("/channels.history", Object.assign(options, {
 		inclusive: true
 	})).then((data) => {
-		parseMessages(data && data.messages).then((messagesHTML) => {
-			console.log("<html>");
-			console.log("<head>"+ styles +"</head>");
-			console.log(messagesHTML)
-			console.log("</html>");
-		})
+		return parseMessages(data && data.messages).then((messagesHTML) => {
+			let htmlString = 	"<html>" +
+									"<head>"+ styles +"</head>" +
+										messagesHTML +
+								"</html>";
+			utils.writeHTMLtoS3( `${options.channel}_${options.oldest}_${options.latest}.html`, htmlString);
+		});
 	}).catch((err) => {
 		console.log(err);
 	});
