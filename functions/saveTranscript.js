@@ -1,15 +1,20 @@
 //saveTranscript.js
 'use strict';
 const utils = require('./utils.js');
+
+const s3Bucket = "https://s3.amazonaws.com/dd-transcripts";
 let userLookup = {};
 let stats = {
 	users: 0
 };
 function handleEvent (event, context, callback) {
-	const channelId = event.channel_id;
-	const oldestTimestamp = event.oldest_ts || 0;
-	const latestTimestamp = event.latest_ts || Date.now();
-	const numOfMessages = event.message_count || 1000;
+	console.log(event)
+	let options = utils.parseSns(event) || event;
+	console.log(options);
+	const channelId = options.channel_id;
+	const oldestTimestamp = options.oldest_ts || 0;
+	const latestTimestamp = options.latest_ts || Date.now();
+	const numOfMessages = options.message_count || 1000;
 
 	if(channelId){
 		return getChannelMessages({
@@ -32,7 +37,11 @@ function getChannelMessages(options) {
 									"<head><link rel='stylesheet' type='text/css' href='styles.css'></head>" +
 										messagesHTML +
 								"</html>";
-			utils.writeHTMLtoS3( `${options.channel}_${options.oldest}_${options.latest}.html`, htmlString);
+
+			let filename = `${options.channel}_${options.oldest}_${options.latest}.html`;
+			utils.writeHTMLtoS3(filename, htmlString).then(() => {
+				sendTranscriptReceipt(options.channel, filename);
+			});
 		});
 	}).catch((err) => {
 		console.log(err);
@@ -180,6 +189,15 @@ function parseUsernames(text) {
 		};
 		return retText;
 	});
+}
+
+function sendTranscriptReceipt(channelId, filename){
+	let text = `A transcript of this chat has been archived here: ${s3Bucket}/${filename}`;
+	return utils.fetchSlackEndpoint('chat.postMessage', {
+		channel: channelId,
+		text,
+		username: "DD-ALEXA"
+	})
 }
 
 

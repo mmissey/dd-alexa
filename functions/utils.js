@@ -4,7 +4,7 @@
 const fetch = require('node-fetch');
 const AWS = require('aws-sdk');
 const SLACK_API = "https://slack.com/api/";
-
+const sns = new AWS.SNS();
 function fetchSlackEndpoint(endpoint, body){
     let bodyData = [
         `token=${process.env.SLACK_API_KEY}`
@@ -62,7 +62,7 @@ function getSlotFromResponse(slots, key){
 
 // AWS HELPERS
 function sendSns(options) {
-    console.log('sending: ', type, page);
+    console.log('sending: ', JSON.stringify(options));
     return new Promise((resolve, reject) => {
         const params = {
             TopicArn: process.env.SNS_TOPIC,
@@ -112,6 +112,10 @@ function writeHTMLtoS3(filename, html) {
             }
         });
     });
+}
+
+function parseSns(event) {
+    return event.Records && event.Records[0] && event.Records[0].Sns && event.Records[0].Sns.Message && JSON.parse(event.Records[0].Sns.Message);
 }
 
 
@@ -200,6 +204,11 @@ function onLaunch(launchRequest, session, callback) {
     // Dispatch to your skill's launch.
     getWelcomeResponse(callback);
 }
+
+function listCommands(callback) {
+    let outputText = "You can say 'Send an at channel', 'How many members are there', 'How many unread messages do I have', 'save a transcript', or 'kick everyone from channel'";
+    callback({}, buildSpeechletResponse(intent.name, outputText, null, true));
+}
 /**
  * Called when the user ends the session.
  * Is not called when the skill returns shouldEndSession=true.
@@ -217,8 +226,11 @@ module.exports = {
     buildResponse,
     buildSpeechletResponse,
     handleSessionEndRequest,
+    listCommands,
     onSessionEnded,
     handleError,
     writeHTMLtoS3,
+    sendSns,
+    parseSns,
     getSlotFromResponse
 }

@@ -61,11 +61,14 @@ function onIntent(intentRequest, session, callback) {
         case 'unreadCount':
             handleUnreadCount(intent, session, callback);
             break;
-        case 'kickUsers': {
+        case 'kickUsers': 
             handleKickUsers(intent, session, callback);
-        }
+            break;
+        case 'saveTranscript':
+            handleSaveTranscript(intent, session, callback);
+            break;
         case 'AMAZON.HelpIntent':
-            utils.getWelcomeResponse(callback);
+            utils.listCommands(callback);
             break;
         case 'AMAZON.StopIntent':
         case 'AMAZON.CancelIntent':
@@ -184,10 +187,37 @@ function handleKickUsers(intent, session, callback){
         });
         return;
     }
-    return performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId)).then((data) => {
-        let outputText = `You kicked all ${userPromises.length} users from ${channel.name}`;
+    return performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId)).then((numberAffected) => {
+        let outputText = `You kicked all ${numberAffected} users from ${channel.name}`;
         callback({}, utils.buildSpeechletResponse(null, outputText, null, true));
     });
+}
+
+function handleSaveTranscript(intent, session, callback){
+    let oldest = 0, channel, channelId, duration;
+    if (intent && intent.slots) {
+        channel = utils.getSlotFromResponse(intent.slots, 'channelName');
+        channelId = channel ? channel.id : null;
+        duration = utils.getSlotFromResponse(intent.slots, 'channelName');
+    }
+    if(!channelId){
+        callback({}, {
+            "directives": [ { "type": "Dialog.Delegate", } ]
+        });
+        return;
+    }
+    if(duration){
+        console.log(JSON.stringify(duration));
+    }
+
+    return utils.sendSns({
+        channel_id: channelId,
+        oldest_ts: 0
+    }).then((data) => {
+        let outputText = "The transcription has been started.";
+        callback({}, utils.buildSpeechletResponse(null, outputText, null, true));
+    })
+
 }
 
 
@@ -217,8 +247,11 @@ function performOnAllUsersInChannel(channelId, action) {
         channel: channelId
     }).then((res) => {
         if(!res.ok){ return; }
+        console.log('IN CASE SOMETHING GOES WRONG, HERE ARE THE AFFECTED USERS: ', JSON.stringify(res.channel.members))
         userPromises = res.channel.members.map(action);
-        return Promise.all(userPromises);
+        return Promise.all(userPromises).then(() => {
+            return userPromises.length;
+        });
     })
 }
 
@@ -245,24 +278,8 @@ function inviteUserToChannel(channelId, user) {
     });
 }
 
-
-// module.exports.handleEvent({
-//     version: '1.0',
-//     session: {
-//         new: true,
-//         sessionId: 'amzn1.echo-api.session.995e248a-89b9-42d9-99b1-f6b1c0e2df35',
-//         application: { applicationId: 'amzn1.ask.skill.ba02be6b-3519-489e-a6ff-eb4627767ffe' },
-//         user: { userId: 'amzn1.ask.account.AFSYWLP2TUINA7XH2IDT33YKZ5SNPBPFHFZ7CGPKE7APFKW6ZPNFR5QWX2BNCK5QGIISUV4A4HZGF4OZSQXDS5ZPIRINVJVKP7VVSECFKPOC46AKJ6BWSGPKRNC32GEGYQH77EWDCLMAAUMNVT5YK3PLPABC3AXFL5ZI35RQULSWACKJRGTQBTPUOAZOPQW65TRHQI4YQSJACZY' } 
-//     },
-//     context: {
-//         AudioPlayer: { playerActivity: 'IDLE' }
-//     },
-//     request: { 
-//         type: 'IntentRequest',
-//         requestId: 'amzn1.echo-api.request.ad41b3c8-6277-4473-a59b-f4032de30989',
-//         timestamp: '2017-07-30T17:20:43Z',
-//         locale: 'en-US',
-//         intent: { name: 'memberCount', confirmationStatus: 'NONE' },
-//         dialogState: 'STARTED'
-//     }
-// }, null, (data, output) => {console.log(output)})
+function inviteFromList(channelId, users){
+    users.forEach((user) => {
+        inviteUserToChannel(channelId, user);
+    })
+}
