@@ -226,6 +226,6 @@ module.exports = {
 	handleEvent
 }
 
-handleEvent({
-	channel_id: "C040F1EV7"//"C643L9WG6"//"C040F1EV5"//
-})
+// handleEvent({
+// 	channel_id: "C040F1EV7"//"C643L9WG6"//"C040F1EV5"//
+// })
