@@ -2,7 +2,7 @@
 
 // SLACK UTILS
 const fetch = require('node-fetch');
-
+const AWS = require('aws-sdk');
 const SLACK_API = "https://slack.com/api/";
 
 function fetchSlackEndpoint(endpoint, body){
@@ -33,7 +33,9 @@ function fetchSlackEndpoint(endpoint, body){
         }else{
             return json;
         }
-    })
+    }).catch((err) => {
+        console.log("SLACK API ERROR:", JSON.stringify(err));
+    });
 }
 
 const SUCCESS = "ER_SUCCESS_MATCH";
@@ -58,7 +60,7 @@ function getSlotFromResponse(slots, key){
     return null;
 }
 
-
+// AWS HELPERS
 function sendSns(options) {
     console.log('sending: ', type, page);
     return new Promise((resolve, reject) => {
@@ -82,6 +84,51 @@ function sendSns(options) {
             }
             console.log(`sent message. data = ${JSON.stringify(data)}`);
             return resolve();
+        });
+    });
+}
+
+function writeXMLtoS3(filename, xml, nfs) {
+    const bucket = process.env.S3_BUCKET;
+    if (nfs) {
+        nfs.logger.info(`Uploading ${filename} to S3: ${bucket}`);
+    }
+    const s3 = new AWS.S3({
+        params: {
+            Bucket: bucket
+        }
+    });
+    return new Promise((resolve, reject) => {
+        zlib.gzip(xml, (error, compData) => {
+            if (error) {
+                console.log(error);
+                reject(error);
+            }
+            s3.upload({
+                Key: filename,
+                ContentType: 'application/xml',
+                Body: compData,
+                ACL: 'public-read',
+                ContentEncoding: 'gzip'
+            }, (err, data) => {
+                if (err) {
+                    if (nfs) {
+                        nfs.logger.warn(`Error uploading ${filename} to S3. ${JSON.stringify(err)}`);
+                    }
+                    reject();
+                } else {
+                    if (nfs) {
+                        nfs.logger.info(`Uploaded ${filename} to S3.`);
+                    }
+                    return lib.purgeCache(`${conf.get('sitemapPath')}${filename}`).then((result, purgeError) => {
+                        if (!purgeError) {
+                            resolve();
+                        } else {
+                            reject();
+                        }
+                    });
+                }
+            });
         });
     });
 }

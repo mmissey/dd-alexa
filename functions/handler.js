@@ -245,11 +245,24 @@ function inviteUserToChannel(channelId, user) {
     });
 }
 
-module.exports.handleEvent({
-    session: {
-        new: true
-    },
-    request: {
-        type: "LaunchRequest"
-    }
-})
+
+// module.exports.handleEvent({
+//     version: '1.0',
+//     session: {
+//         new: true,
+//         sessionId: 'amzn1.echo-api.session.995e248a-89b9-42d9-99b1-f6b1c0e2df35',
+//         application: { applicationId: 'amzn1.ask.skill.ba02be6b-3519-489e-a6ff-eb4627767ffe' },
+//         user: { userId: 'amzn1.ask.account.AFSYWLP2TUINA7XH2IDT33YKZ5SNPBPFHFZ7CGPKE7APFKW6ZPNFR5QWX2BNCK5QGIISUV4A4HZGF4OZSQXDS5ZPIRINVJVKP7VVSECFKPOC46AKJ6BWSGPKRNC32GEGYQH77EWDCLMAAUMNVT5YK3PLPABC3AXFL5ZI35RQULSWACKJRGTQBTPUOAZOPQW65TRHQI4YQSJACZY' } 
+//     },
+//     context: {
+//         AudioPlayer: { playerActivity: 'IDLE' }
+//     },
+//     request: { 
+//         type: 'IntentRequest',
+//         requestId: 'amzn1.echo-api.request.ad41b3c8-6277-4473-a59b-f4032de30989',
+//         timestamp: '2017-07-30T17:20:43Z',
+//         locale: 'en-US',
+//         intent: { name: 'memberCount', confirmationStatus: 'NONE' },
+//         dialogState: 'STARTED'
+//     }
+// }, null, (data, output) => {console.log(output)})

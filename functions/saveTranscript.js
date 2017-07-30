@@ -1,7 +1,6 @@
 //saveTranscript.js
 'use strict';
 const utils = require('./utils.js');
-const AWS = require('aws-sdk');
 const styles = require('./styles.js').stylesheet
 let userLookup = {};
 let stats = {
