@@ -1,0 +1,62 @@
+body {
+	font-family: 'Slack-Lato,appleLogo,sans-serif';
+	padding: 0 100px;
+}
+
+.day_marker {
+	text-align: center;
+	width: 100%;
+}
+.day_marker:before, .day_marker:after {
+	border-top: 1px solid #CCCCCC;
+	content: '';
+	display: inline-block;
+	height: 0px;
+	position: relative;
+	top: -4px;
+	width: calc(50% - 40px);
+}
+.message {
+	margin-bottom: 10px;
+	min-height: 36px;
+}
+.message:hover { 
+	background:#f9f9f9;
+}
+a, a:link, a:visited {
+	color: #007AB8;
+	text-decoration: none;
+}
+.inline-img {
+	max-width: 500px;
+	width: 100%;
+}
+.poster {
+	font-weight: bold;
+	margin-right: 5px;
+}
+.timestamp {
+	font-size: 0.8em;
+}
+.mention {
+	font-weight: bold;
+	background-color: #FFF3B8;
+}
+.channel_join .content, .channel_leave .content, .channel_purpose .content {
+	color: #cdcdd1;
+	font-style: italic;
+}
+.channel_join .poster, .channel_leave .poster, .channel_purpose .poster {
+	display: none;
+}
+.profPic {
+	width: 42px;
+	height:42px;
+	float: left;
+	margin-right: 5px;
+}
+.profPic img {
+	border-radius: 5px;
+	width: 36px;
+	height: 36px;
+}

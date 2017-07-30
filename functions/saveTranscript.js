@@ -1,7 +1,6 @@
 //saveTranscript.js
 'use strict';
 const utils = require('./utils.js');
-const styles = require('./styles.js').stylesheet
 let userLookup = {};
 let stats = {
 	users: 0
@@ -30,7 +29,7 @@ function getChannelMessages(options) {
 	})).then((data) => {
 		return parseMessages(data && data.messages).then((messagesHTML) => {
 			let htmlString = 	"<html>" +
-									"<head>"+ styles +"</head>" +
+									"<head><link rel='stylesheet' type='text/css' href='styles.css'></head>" +
 										messagesHTML +
 								"</html>";
 			utils.writeHTMLtoS3( `${options.channel}_${options.oldest}_${options.latest}.html`, htmlString);
