@@ -82,6 +82,7 @@ function parseMessages(messages) {
 					return parseUsernames(message.text) // Get info for any user mentioned in the message
 					.then(parseMentions)				//Pull out @channel, @here, etc
 					.then(parseChannels)				//Convert to link to channel
+					.then(parseLinks)					//show inline images
 					.then((text) => {					// then html
 					return html + buildMessageHTML(author.name, author.profile.image_72, subtype, time, text);
 				});
@@ -91,6 +92,7 @@ function parseMessages(messages) {
 				parseUsernames(message.text)
 				.then(parseMentions)
 				.then(parseChannels)
+				.then(parseLinks)
 				.then((text) => {
 					return html + buildMessageHTML(message.username, getBotImage(), subtype, time, text);
 				})
@@ -130,12 +132,34 @@ function getBotImage(userId){
 	return "https://placekitten.com/42/42";
 }
 
+function parseLinks(text) {
+	let retText = text.substr(0);
+	let regex = /<(https?:\/\/.*)>/g;
+	let match;
+	let imgFormat = /\.(gif|jpg|jpeg|tiff|png)/;
+	while((match = regex.exec(retText)) !== null){
+		if(imgFormat.test(match[1])){
+			let index = match[1].indexOf("|");
+			if(index !== -1){
+				match[1] = match[1].substr(0, index).replace(" ", "_"); //remove image title
+				match[1] = match[1].replace(".png", "_360.png");
+			}
+			retText = retText.replace(match[0], "<a href='"+match[1]+"'>"+match[1]+"</a><img class='inline-img' src='"+match[1]+"'/>");
+
+		}else{
+			retText = retText.replace(match[0], "<a href='"+match[1]+"'>"+match[1]+"</a>");
+		}
+	}
+	return Promise.resolve(retText);
+}
+
+
 function parseUsernames(text) {
 	let retText = text.substr(0);
 	let regex = /<@([A-Z0-9]+)\|?([a-zA-Z0-9\.\-_]+)?>/g;
 	let match;
 	let usernameRequests = [];
-	while((match = regex.exec(text)) !== null){
+	while((match = regex.exec(retText)) !== null){
 		if(match[2]){
 			usernameRequests.push(Promise.resolve({
 				replace: match[0],
@@ -164,7 +188,7 @@ function parseMentions(text) {
 	let retText = text.substr(0);
 	let regex = /<!([a-zA-Z0-9]+)>/g;
 	let match;
-	while((match = regex.exec(text)) !== null){
+	while((match = regex.exec(retText)) !== null){
 		retText = retText.replace(match[0], "<span class='mention'>@"+match[1]+"</span>");
 	}
 	return Promise.resolve(retText);
@@ -174,7 +198,7 @@ function parseChannels(text) {
 	let retText = text.substr(0);
 	let regex = /<#([A-Z0-9]+)\|([a-zA-Z0-9\.\-_]+)?>/g;
 	let match;
-	while((match = regex.exec(text)) !== null){
+	while((match = regex.exec(retText)) !== null){
 		retText = retText.replace(match[0], getChannelLink(match[1], match[2]));
 	}
 	return Promise.resolve(retText);
