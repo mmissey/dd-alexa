@@ -144,7 +144,7 @@ function parseLinks(text) {
 				match[1] = match[1].substr(0, index).replace(" ", "_"); //remove image title
 				match[1] = match[1].replace(".png", "_360.png");
 			}
-			retText = retText.replace(match[0], "<a href='"+match[1]+"'>"+match[1]+"</a><img class='inline-img' src='"+match[1]+"'/>");
+			retText = retText.replace(match[0], "<a href='"+match[1]+"'>"+match[1]+"</a><br><img class='inline-img' src='"+match[1]+"'/>");
 
 		}else{
 			retText = retText.replace(match[0], "<a href='"+match[1]+"'>"+match[1]+"</a>");

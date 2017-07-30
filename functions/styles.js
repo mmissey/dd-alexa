@@ -6,6 +6,7 @@ const stylesheet =
 		".message { margin-bottom: 10px;min-height: 36px; }" +
 		".message:hover { background:#f9f9f9; }" +
 		"a, a:link, a:visited { color: #007AB8; text-decoration: none;}" +
+		".inline-img { width: 100%; max-width: 500px; }" +
 		".poster { font-weight: bold; margin-right: 5px;}" +
 		".timestamp { font-size: 0.8em; }" +
 		".mention { font-weight: bold; background-color: #FFF3B8;}" +
