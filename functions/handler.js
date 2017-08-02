@@ -200,6 +200,9 @@ function handleSaveTranscript(intent, session, callback){
         channel = utils.getSlotFromResponse(intent.slots, 'channelName');
         channelId = channel ? channel.id : null;
         duration = utils.getSlotFromResponse(intent.slots, 'duration');
+        duration = duration.name || null;
+        console.log("duration", duration)
+        console.log("channelId", channelId)
     }
     if(!channelId){
         callback({}, {
@@ -208,11 +211,15 @@ function handleSaveTranscript(intent, session, callback){
         return;
     }
     if(duration){
-        console.log(duration);
-        let durSeconds = isoDuration.toSeconds(duration);
+        let durSeconds = isoDuration.toSeconds(isoDuration.parse(duration));
         let startTime = Date.now()-(durSeconds*1000);  //UTC time
         oldest = startTime/1000 // Slack epoch timestamp
-        console.log(oldest);
+        console.log("oldest", oldest);
+    }else{
+        callback({}, {
+            "directives": [ { "type": "Dialog.Delegate", } ]
+        });
+        return;
     }
 
     return utils.sendSns({
@@ -288,3 +295,38 @@ function inviteFromList(channelId, users){
         inviteUserToChannel(channelId, user);
     })
 }
+
+
+// module.exports.handleEvent({
+//   "session": {
+//     "sessionId": "SessionId.a7612dd2-5527-4e08-aac5-2ae3f6c5e754",
+//     "application": {
+//       "applicationId": "amzn1.ask.skill.ba02be6b-3519-489e-a6ff-eb4627767ffe"
+//     },
+//     "attributes": {},
+//     "user": {
+//       "userId": "amzn1.ask.account.AFSYWLP2TUINA7XH2IDT33YKZ5SNPBPFHFZ7CGPKE7APFKW6ZPNFR5QWX2BNCK5QGIISUV4A4HZGF4OZSQXDS5ZPIRINVJVKP7VVSECFKPOC46AKJ6BWSGPKRNC32GEGYQH77EWDCLMAAUMNVT5YK3PLPABC3AXFL5ZI35RQULSWACKJRGTQBTPUOAZOPQW65TRHQI4YQSJACZY"
+//     },
+//     "new": true
+//   },
+//   "request": {
+//     "type": "IntentRequest",
+//     "requestId": "EdwRequestId.3fb00342-a409-4684-984d-24fe7636165b",
+//     "locale": "en-US",
+//     "timestamp": "2017-08-02T02:09:23Z",
+//     "intent": {
+//       "name": "saveTranscript",
+//       "slots": {
+//         "duration": {
+//           "name": "duration",
+//           "value": "PT15M"
+//         },
+//         "channelName": {
+//           "name": "channelName",
+//           "value": "topic-general"
+//         }
+//       }
+//     }
+//   },
+//   "version": "1.0"
+// }, {}, (data) => {})

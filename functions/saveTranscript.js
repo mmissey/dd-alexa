@@ -1,8 +1,8 @@
 //saveTranscript.js
 'use strict';
 const utils = require('./utils.js');
-
 const s3Bucket = "https://s3.amazonaws.com/dd-transcripts";
+
 let userLookup = {};
 let stats = {
 	users: 0
@@ -13,7 +13,7 @@ function handleEvent (event, context, callback) {
 	console.log(options);
 	const channelId = options.channel_id;
 	const oldestTimestamp = options.oldest_ts || 0;
-	const latestTimestamp = options.latest_ts || Date.now();
+	const latestTimestamp = options.latest_ts || utils.convertUTCtoMountain(Date.now()).getTime()/1000;
 	const numOfMessages = options.message_count || 1000;
 
 	if(channelId){
@@ -72,11 +72,11 @@ function parseMessages(messages) {
 		return;
 	}
 	// Set a starting date. Most resent message timestamp
-	let currentDay = new Date(messages[0].ts*1000).toLocaleDateString('en-US');
+	let currentDay = utils.convertUTCtoMountain(messages[0].ts*1000).toLocaleDateString('en-US');
 	let messagePromises = [];
 	messages.forEach((message, index) => {
 		let subtype = message.subtype || '';
-		let date = new Date(message.ts*1000)
+		let date = utils.convertUTCtoMountain(message.ts*1000)
 		let time = date.toLocaleTimeString();
 		let html = "";
 		// When the day changes. Place a timestamp
@@ -85,6 +85,10 @@ function parseMessages(messages) {
 			currentDay = date.toLocaleDateString('en-US');
 		}
 		if(message.user){
+			if(!message.text){
+				//pins have no text?
+				return;
+			}
 			messagePromises.push(
 				getUserInfo(message.user).then((author) => {  // First get author info
 					return parseUsernames(message.text) // Get info for any user mentioned in the message
@@ -109,13 +113,12 @@ function parseMessages(messages) {
 	});
 
 	let firstTime = messages[messages.length-1].ts;
-	messagePromises.push(Promise.resolve(("<div class='day_marker'>" + new Date(firstTime*1000).toLocaleDateString('en-US') + "</div>")));
+	messagePromises.push(Promise.resolve(("<div class='day_marker'>" + utils.convertUTCtoMountain(firstTime*1000).toLocaleDateString('en-US') + "</div>")));
 	return Promise.all(messagePromises).then((messages) => {
 		return "<body>" +
 			"<div className='main'>" +
 				messages.reverse().join('\n') + 
 			"</div>" +
-			stats.users +
 		"</body>";
 	});
 }
@@ -243,6 +246,4 @@ module.exports = {
 	handleEvent
 }
 
-// handleEvent({
-// 	channel_id: "C040F1EV7"//"C643L9WG6"//"C040F1EV5"//
-// })
+//handleEvent({ channel_id: 'C09KX5N6B', oldest_ts: 0 })
