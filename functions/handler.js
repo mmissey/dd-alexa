@@ -208,12 +208,16 @@ function handleSaveTranscript(intent, session, callback){
         return;
     }
     if(duration){
-        isoDuration.toSeconds(duration);
+        console.log(duration);
+        let durSeconds = isoDuration.toSeconds(duration);
+        let startTime = Date.now()-(durSeconds*1000);  //UTC time
+        oldest = startTime/1000 // Slack epoch timestamp
+        console.log(oldest);
     }
 
     return utils.sendSns({
         channel_id: channelId,
-        oldest_ts: 0
+        oldest_ts: oldest
     }).then((data) => {
         let outputText = "The transcription has been started.";
         callback({}, utils.buildSpeechletResponse(null, outputText, null, true));
