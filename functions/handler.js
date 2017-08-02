@@ -1,5 +1,6 @@
 'use strict';
 let utils = require('./utils.js');
+let isoDuration = require('iso8601-duration');
 
 module.exports.handleEvent = (event, context, callback) => {
     try {
@@ -198,7 +199,7 @@ function handleSaveTranscript(intent, session, callback){
     if (intent && intent.slots) {
         channel = utils.getSlotFromResponse(intent.slots, 'channelName');
         channelId = channel ? channel.id : null;
-        duration = utils.getSlotFromResponse(intent.slots, 'channelName');
+        duration = utils.getSlotFromResponse(intent.slots, 'duration');
     }
     if(!channelId){
         callback({}, {
@@ -207,7 +208,7 @@ function handleSaveTranscript(intent, session, callback){
         return;
     }
     if(duration){
-        console.log(JSON.stringify(duration));
+        isoDuration.toSeconds(duration);
     }
 
     return utils.sendSns({
