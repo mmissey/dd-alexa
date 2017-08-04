@@ -169,7 +169,7 @@ function getWelcomeResponse(callback) {
     // If we wanted to initialize the session to have some attributes we could add those here.
     const sessionAttributes = {};
     const cardTitle = 'Welcome';
-    const speechOutput = 'Welcome to the Denver Devs Alexa Skill, say help for a list of commands';
+    const speechOutput = 'Welcome to Denver Devs Alexa, say help for a list of commands';
     // If the user either does not reply to the welcome message or says something that is not
     // understood, they will be prompted again with this text.
     const repromptText = 'Please give me a command, ' +
@@ -182,7 +182,7 @@ function getWelcomeResponse(callback) {
 
 function handleSessionEndRequest(callback) {
     const cardTitle = 'Session Ended';
-    const speechOutput = 'Thank you for trying the Denver Devs Alexa Skill';
+    const speechOutput = 'Thank you for trying Denver Devs Alexa';
     // Setting this to true ends the session and exits the skill.
     const shouldEndSession = true;
 
@@ -191,7 +191,7 @@ function handleSessionEndRequest(callback) {
 
 
 function handleError(intent, session, callback) {
-    let outputText = "There was a problem contacting Denver Devs. Please Try Again";
+    let outputText = "There was a problem the request. Please Try Again";
     callback({}, buildSpeechletResponse(intent.name, outputText, null, true));
     return Promise.reject();
 }

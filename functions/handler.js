@@ -52,31 +52,39 @@ function onIntent(intentRequest, session, callback) {
     const intentName = intent.name;
     console.log(intent);
     // Dispatch to your skill's intent handlers
-    switch(intentName) {
-        case 'SendMessage':
-            handleSendMessage(intent, session, callback);
-            break;
-        case 'memberCount':
-            handleMemberCount(intent, session, callback);
-            break;
-        case 'unreadCount':
-            handleUnreadCount(intent, session, callback);
-            break;
-        case 'kickUsers': 
-            handleKickUsers(intent, session, callback);
-            break;
-        case 'saveTranscript':
-            handleSaveTranscript(intent, session, callback);
-            break;
-        case 'AMAZON.HelpIntent':
-            utils.listCommands(callback);
-            break;
-        case 'AMAZON.StopIntent':
-        case 'AMAZON.CancelIntent':
-            utils.handleSessionEndRequest(callback);
-            break;
-        default:
-            throw new Error('Invalid intent');
+    try{
+        switch(intentName) {
+            case 'SendMessage':
+                handleSendMessage(intent, session, callback);
+                break;
+            case 'memberCount':
+                handleMemberCount(intent, session, callback);
+                break;
+            case 'unreadCount':
+                handleUnreadCount(intent, session, callback);
+                break;
+            case 'kickUsers': 
+                handleKickUsers(intent, session, callback);
+                break;
+            case 'saveTranscript':
+                handleSaveTranscript(intent, session, callback);
+                break;
+            case 'setDnd':
+                handleDnd(intent, session, callback);
+                break;
+            case 'AMAZON.HelpIntent':
+                utils.listCommands(callback);
+                break;
+            case 'AMAZON.StopIntent':
+            case 'AMAZON.CancelIntent':
+                utils.handleSessionEndRequest(callback);
+                break;
+            default:
+                throw new Error('Invalid intent');
+        }
+    }catch(e) {
+        console.log("ERROR:", e)
+        return utils.handleError(intent, session, callback);
     }
 }
 
@@ -143,6 +151,8 @@ function handleMemberCount(intent, session, callback) {
             console.log(outputText)
             callback({}, utils.buildSpeechletResponse(intent.name, outputText, null, true));
         }
+    }).catch(() => {
+        return utils.handleError(intent, session, callback);
     });
 }
 
@@ -173,10 +183,52 @@ function handleUnreadCount(intent, session, callback) {
             let outputText = `You have ${unreadCount} unread public channel messages.`;
             callback({}, utils.buildSpeechletResponse(intent.name, outputText, null, true));
         })
-    });
+    }).catch(() => {
+        return utils.handleError(intent, session, callback);
+    });;
 }
 
-function handleKickUsers(intent, session, callback){
+function handleDnd(intent, session, callback) {
+    let turnOn, onOffRes, method, body = {}, outputText;
+    if (intent && intent.slots) {
+        onOffRes = utils.getSlotFromResponse(intent.slots, 'onOff');
+        turnOn = onOffRes ? onOffRes.id : null;
+    }
+    console.log("turn on", turnOn)
+    if(turnOn === null){
+        callback({}, {
+            "directives": [ { "type": "Dialog.Delegate", } ]
+        });
+        return;
+    }
+    turnOn = turnOn == "true";
+    if(turnOn){
+        method = "/dnd.setSnooze";
+        body = {
+            num_minutes: 60*8
+        }
+    }else{
+        method = "/dnd.endDnd";
+    }
+
+    return utils.fetchSlackEndpoint(method, body).then((res) => {
+        if(!res.ok){
+            return utils.handleError(intent, session, callback);
+        }else{
+            if(res.snooze_enabled){
+                let remaining = Math.floor(res.snooze_remaining/3600);
+                outputText = `Do not disturb turned on for ${remaining} hours`;
+            }else{
+                outputText = "Do not disturb off";
+            }
+       callback({}, utils.buildSpeechletResponse(null, outputText, null, true)); 
+        }
+    }).catch((data) => {
+        return utils.handleError(intent, session, callback);
+    })
+}
+
+function handleKickUsers(intent, session, callback) {
     let channel, channelId;
     if (intent && intent.slots) {
         channel = utils.getSlotFromResponse(intent.slots, 'channelName');
@@ -191,7 +243,9 @@ function handleKickUsers(intent, session, callback){
     return performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId)).then((numberAffected) => {
         let outputText = `You kicked all ${numberAffected} users from ${channel.name}`;
         callback({}, utils.buildSpeechletResponse(null, outputText, null, true));
-    });
+    }).catch(() => {
+        return utils.handleError(intent, session, callback);
+    });;
 }
 
 function handleSaveTranscript(intent, session, callback){
@@ -228,7 +282,9 @@ function handleSaveTranscript(intent, session, callback){
     }).then((data) => {
         let outputText = "The transcription has been started.";
         callback({}, utils.buildSpeechletResponse(null, outputText, null, true));
-    })
+    }).catch(() => {
+        return utils.handleError(intent, session, callback);
+    });
 
 }
 
