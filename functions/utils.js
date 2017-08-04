@@ -3,7 +3,7 @@
 // SLACK UTILS
 const fetch = require('node-fetch');
 const AWS = require('aws-sdk');
-const SLACK_API = "https://slack.com/api/";
+const SLACK_API = "https://slack.com/api";
 const sns = new AWS.SNS();
 const TIMEZONE_MS_OFFSET = 6*60*60*1000;
 
@@ -17,6 +17,7 @@ function fetchSlackEndpoint(endpoint, body){
         });
         bodyData = bodyData.join("&");
     }
+    console.log(`${SLACK_API}/${endpoint}`, bodyData);
     return fetch(`${SLACK_API}/${endpoint}`, {
         body: bodyData,
         headers: {

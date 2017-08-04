@@ -201,14 +201,14 @@ function handleDnd(intent, session, callback) {
         });
         return;
     }
-    turnOn = turnOn == "true";
+    turnOn = turnOn == true;
     if(turnOn){
-        method = "/dnd.setSnooze";
+        method = "dnd.setSnooze";
         body = {
             num_minutes: 60*8
         }
     }else{
-        method = "/dnd.endDnd";
+        method = "dnd.endDnd";
     }
 
     return utils.fetchSlackEndpoint(method, body).then((res) => {
@@ -266,7 +266,7 @@ function handleSaveTranscript(intent, session, callback){
     }
     if(duration){
         let durSeconds = isoDuration.toSeconds(isoDuration.parse(duration));
-        let startTime = Date.now()-(durSeconds*1000);  //UTC time
+        let startTime = utils.convertUTCtoMountain(Date.now()-(durSeconds*1000)).getTime();  //UTC time
         oldest = startTime/1000 // Slack epoch timestamp
         console.log("oldest", oldest);
     }else{
@@ -301,7 +301,7 @@ function kickAndBringBack(channelId, user) {
 }
 
 function archiveChannel(channelId) {
-    return utils.fetchSlackEndpoint("/channels.archive", {
+    return utils.fetchSlackEndpoint("channels.archive", {
         channel: channelId
     }).then((res) => {
         return res.ok;
@@ -311,7 +311,7 @@ function archiveChannel(channelId) {
 // Get's the user list for a channel, and performs an action on each user
 function performOnAllUsersInChannel(channelId, action) {
     let userPromises = [];
-    return utils.fetchSlackEndpoint("/channels.info", {
+    return utils.fetchSlackEndpoint("channels.info", {
         channel: channelId
     }).then((res) => {
         if(!res.ok){ return; }
@@ -325,7 +325,7 @@ function performOnAllUsersInChannel(channelId, action) {
 
 function kickUserFromChannel(channelId, user) {
     console.log("kicking", user, "from", channelId)
-    return utils.fetchSlackEndpoint("/channels.kick", {
+    return utils.fetchSlackEndpoint("channels.kick", {
         channel: channelId,
         user
     }).then((res) => {
@@ -338,7 +338,7 @@ function kickUserFromChannel(channelId, user) {
 
 function inviteUserToChannel(channelId, user) {
     console.log("inviting", user, "to", channelId)
-    return utils.fetchSlackEndpoint("/channels.invite", {
+    return utils.fetchSlackEndpoint("channels.invite", {
         channel: channelId,
         user
     }).then((res) => {

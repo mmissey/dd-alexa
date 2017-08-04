@@ -13,7 +13,7 @@ function handleEvent (event, context, callback) {
 	console.log(options);
 	const channelId = options.channel_id;
 	const oldestTimestamp = options.oldest_ts || 0;
-	const latestTimestamp = options.latest_ts || utils.convertUTCtoMountain(Date.now()).getTime()/1000;
+	const latestTimestamp = options.latest_ts || Date.now()
 	const numOfMessages = options.message_count || 1000;
 
 	if(channelId){
@@ -29,7 +29,7 @@ function handleEvent (event, context, callback) {
 
 
 function getChannelMessages(options) {
-	return utils.fetchSlackEndpoint("/channels.history", Object.assign(options, {
+	return utils.fetchSlackEndpoint("channels.history", Object.assign(options, {
 		inclusive: true
 	})).then((data) => {
 		return parseMessages(data && data.messages).then((messagesHTML) => {
@@ -53,7 +53,7 @@ function getUserInfo(userId){
 		return Promise.resolve(userLookup[userId])
 	}else {
 		stats.users++;
-		return userLookup[userId] = utils.fetchSlackEndpoint("/users.info", {
+		return userLookup[userId] = utils.fetchSlackEndpoint("users.info", {
 			user: userId
 		}).then((data) => {
 			if(data.ok){
@@ -68,8 +68,9 @@ function getUserInfo(userId){
 
 function parseMessages(messages) {
 	let messagesHTML = [];
-	if(!messages) {
-		return;
+	console.log("messages:", messages)
+	if(!messages || !messages.length) {
+		return Promise.reject();
 	}
 	// Set a starting date. Most resent message timestamp
 	let currentDay = utils.convertUTCtoMountain(messages[0].ts*1000).toLocaleDateString('en-US');
