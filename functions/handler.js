@@ -7,16 +7,6 @@ module.exports.handleEvent = (event, context, callback) => {
         console.log(event);
         console.log(`event.session.application.applicationId=${event.session.application.applicationId}`);
 
-        /**
-         * Uncomment this if statement and populate with your skill's application ID to
-         * prevent someone else from configuring a skill that sends requests to this function.
-         */
-        /*
-        if (event.session.application.applicationId !== 'amzn1.echo-sdk-ams.app.[unique-value-here]') {
-             callback('Invalid Application ID');
-        }
-        */
-
         if(event.session.new){
             utils.onSessionStarted({ requestId: event.request.requestId }, event.session);
         }
@@ -92,7 +82,6 @@ function handleSendMessage(intent, session, callback) {
     let message;
     let channel;
     const repromptText = null;
-    const sessionAttributes = {};
     let shouldEndSession = false;
     let speechOutput = '';
     let slotToElicit = null;
@@ -115,11 +104,11 @@ function handleSendMessage(intent, session, callback) {
             }else{
                 speechOutput = `Message Failed`;
             }
-            callback(sessionAttributes,
+            callback(null,
                 utils.buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
         })
     }else{
-        callback(sessionAttributes, {
+        callback(null, {
             "directives": [ { "type": "Dialog.Delegate", } ]
         });
     }
@@ -149,7 +138,7 @@ function handleMemberCount(intent, session, callback) {
         if(announcements && announcements.num_members){
             let outputText = `Denver Devs has ${announcements.num_members} members.`
             console.log(outputText)
-            callback({}, utils.buildSpeechletResponse(intent.name, outputText, null, true));
+            callback(null, utils.buildSpeechletResponse(intent.name, outputText, null, true));
         }
     }).catch(() => {
         return utils.handleError(intent, session, callback);
@@ -181,7 +170,7 @@ function handleUnreadCount(intent, session, callback) {
                 return parseInt(a)+parseInt(b);
             });
             let outputText = `You have ${unreadCount} unread public channel messages.`;
-            callback({}, utils.buildSpeechletResponse(intent.name, outputText, null, true));
+            callback(null, utils.buildSpeechletResponse(intent.name, outputText, null, true));
         })
     }).catch(() => {
         return utils.handleError(intent, session, callback);
@@ -196,7 +185,7 @@ function handleDnd(intent, session, callback) {
     }
     console.log("turn on", turnOn)
     if(turnOn === null){
-        callback({}, {
+        callback(null, {
             "directives": [ { "type": "Dialog.Delegate", } ]
         });
         return;
@@ -221,7 +210,7 @@ function handleDnd(intent, session, callback) {
             }else{
                 outputText = "Do not disturb off";
             }
-       callback({}, utils.buildSpeechletResponse(null, outputText, null, true)); 
+       callback(null, utils.buildSpeechletResponse(null, outputText, null, true)); 
         }
     }).catch((data) => {
         return utils.handleError(intent, session, callback);
@@ -235,14 +224,14 @@ function handleKickUsers(intent, session, callback) {
         channelId = channel ? channel.id : null;
     }
     if(!channelId){
-        callback({}, {
+        callback(null, {
             "directives": [ { "type": "Dialog.Delegate", } ]
         });
         return;
     }
     return performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId)).then((numberAffected) => {
         let outputText = `You kicked all ${numberAffected} users from ${channel.name}`;
-        callback({}, utils.buildSpeechletResponse(null, outputText, null, true));
+        callback(null, utils.buildSpeechletResponse(null, outputText, null, true));
     }).catch(() => {
         return utils.handleError(intent, session, callback);
     });;
@@ -259,7 +248,7 @@ function handleSaveTranscript(intent, session, callback){
         console.log("channelId", channelId)
     }
     if(!channelId){
-        callback({}, {
+        callback(null, {
             "directives": [ { "type": "Dialog.Delegate", } ]
         });
         return;
@@ -270,7 +259,7 @@ function handleSaveTranscript(intent, session, callback){
         oldest = startTime/1000 // Slack epoch timestamp
         console.log("oldest", oldest);
     }else{
-        callback({}, {
+        callback(null, {
             "directives": [ { "type": "Dialog.Delegate", } ]
         });
         return;
@@ -281,7 +270,7 @@ function handleSaveTranscript(intent, session, callback){
         oldest_ts: oldest
     }).then((data) => {
         let outputText = "The transcription has been started.";
-        callback({}, utils.buildSpeechletResponse(null, outputText, null, true));
+        callback(null, utils.buildSpeechletResponse(null, outputText, null, true));
     }).catch(() => {
         return utils.handleError(intent, session, callback);
     });

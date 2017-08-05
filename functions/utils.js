@@ -3,9 +3,12 @@
 // SLACK UTILS
 const fetch = require('node-fetch');
 const AWS = require('aws-sdk');
-const SLACK_API = "https://slack.com/api";
 const sns = new AWS.SNS();
+
+const SLACK_API = "https://slack.com/api";
 const TIMEZONE_MS_OFFSET = 6*60*60*1000;
+const SUCCESS = "ER_SUCCESS_MATCH";
+const NOT_FOUND = "ER_SUCCESS_NO_MATCH";
 
 function fetchSlackEndpoint(endpoint, body){
     let bodyData = [
@@ -45,8 +48,6 @@ function convertUTCtoMountain(utcTimestamp){
     return new Date(utcTimestamp-TIMEZONE_MS_OFFSET);
 }
 
-const SUCCESS = "ER_SUCCESS_MATCH";
-const NOT_FOUND = "ER_SUCCESS_NO_MATCH";
 
 function getSlotFromResponse(slots, key){
     if(slots[key]){
