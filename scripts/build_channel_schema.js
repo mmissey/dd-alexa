@@ -1,4 +1,4 @@
-const utils = require('./utils');
+const utils = require('../functions/utils');
 
 utils.fetchSlackEndpoint("/channels.list").then((itemData) => {
     if(!itemData.ok || !itemData.channels.length){
