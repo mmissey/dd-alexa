@@ -62,8 +62,10 @@ function onIntent(intentRequest, session, callback) {
             case 'setDnd':
                 handleDnd(intent, session, callback);
                 break;
+            case 'burnItDown':
+                handleTheBurn(intent, session, callback);
             case 'AMAZON.HelpIntent':
-                utils.listCommands(callback);
+                utils.listCommands(intent, session, callback);
                 break;
             case 'AMAZON.StopIntent':
             case 'AMAZON.CancelIntent':
@@ -84,7 +86,6 @@ function handleSendMessage(intent, session, callback) {
     const repromptText = null;
     let shouldEndSession = false;
     let speechOutput = '';
-    let slotToElicit = null;
 
     if (intent && intent.slots) {
         message = utils.getSlotFromResponse(intent.slots, 'message')
@@ -100,12 +101,12 @@ function handleSendMessage(intent, session, callback) {
         }
         sendSlackMessage(message, channel.name, process.env.SLACK_USERNAME).then((res) => {
             if(res.ok){
-                speechOutput = `Message Sent`;
+                speechOutput = `Message Sent to ${channel.name}`;
             }else{
                 speechOutput = `Message Failed`;
             }
             callback(null,
-                utils.buildSpeechletResponse(intent.name, speechOutput, repromptText, shouldEndSession));
+                utils.buildSpeechletResponse("Send Message", speechOutput, repromptText, shouldEndSession));
         })
     }else{
         callback(null, {
@@ -138,7 +139,7 @@ function handleMemberCount(intent, session, callback) {
         if(announcements && announcements.num_members){
             let outputText = `Denver Devs has ${announcements.num_members} members.`
             console.log(outputText)
-            callback(null, utils.buildSpeechletResponse(intent.name, outputText, null, true));
+            callback(null, utils.buildSpeechletResponse("Member Count", outputText, null, true));
         }
     }).catch(() => {
         return utils.handleError(intent, session, callback);
@@ -170,11 +171,35 @@ function handleUnreadCount(intent, session, callback) {
                 return parseInt(a)+parseInt(b);
             });
             let outputText = `You have ${unreadCount} unread public channel messages.`;
-            callback(null, utils.buildSpeechletResponse(intent.name, outputText, null, true));
+            callback(null, utils.buildSpeechletResponse("Unread Messages", outputText, null, true));
         })
     }).catch(() => {
         return utils.handleError(intent, session, callback);
     });;
+}
+
+function handleTheBurn(intent, session, callback){
+    let promises = [];
+    let channelsToBurn = {
+        "topic-marc": "C643L9WG6",
+        "topic-marc2": "C6JSHQ1MF"
+    };
+    Object.keys(channelsToBurn).forEach((channel) => {
+        let channelId = channelsToBurn[channel];
+        sendSlackMessage(":fire::fire::fire::fire::fire::fire::fire::fire::fire:", channel, process.env.SLACK_USERNAME);
+        sendSlackMessage("http://www.allgeektome.net/wp-content/uploads/2016/06/Game-of-Thrones-1467044371.gif\n" +
+        ":spacer::spacer::fire::fire::fire::fire::fire: <!channel> :fire::fire::fire::fire::fire:\n" +
+        ":spacer::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire:\n" +
+        ":fire::fire::fire::fire:*This channel is going down!!!!*:fire::fire::fire::fire:\n" +
+        ":spacer::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire:\n" +
+        ":spacer::spacer::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire:", channel, process.env.SLACK_USERNAME).then(() => {
+            performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId));
+        }).then(()=> {
+            archiveChannel(channelId);
+        });
+    });
+
+    callback(null, utils.secretResponse());
 }
 
 function handleDnd(intent, session, callback) {
@@ -210,7 +235,7 @@ function handleDnd(intent, session, callback) {
             }else{
                 outputText = "Do not disturb off";
             }
-       callback(null, utils.buildSpeechletResponse(null, outputText, null, true)); 
+       callback(null, utils.buildSpeechletResponse("Do-Not-Disturb", outputText, null, true)); 
         }
     }).catch((data) => {
         return utils.handleError(intent, session, callback);
@@ -231,10 +256,10 @@ function handleKickUsers(intent, session, callback) {
     }
     return performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId)).then((numberAffected) => {
         let outputText = `You kicked all ${numberAffected} users from ${channel.name}`;
-        callback(null, utils.buildSpeechletResponse(null, outputText, null, true));
+        callback(null, utils.buildSpeechletResponse("Kick Users", outputText, null, true));
     }).catch(() => {
         return utils.handleError(intent, session, callback);
-    });;
+    });
 }
 
 function handleSaveTranscript(intent, session, callback){
@@ -269,8 +294,8 @@ function handleSaveTranscript(intent, session, callback){
         channel_id: channelId,
         oldest_ts: oldest
     }).then((data) => {
-        let outputText = "The transcription has been started.";
-        callback(null, utils.buildSpeechletResponse(null, outputText, null, true));
+        let outputText = "The transcription has been started for " + channel.name;
+        callback(null, utils.buildSpeechletResponse("DD Transcription", outputText, null, true));
     }).catch(() => {
         return utils.handleError(intent, session, callback);
     });
@@ -304,7 +329,7 @@ function performOnAllUsersInChannel(channelId, action) {
         channel: channelId
     }).then((res) => {
         if(!res.ok){ return; }
-        console.log('IN CASE SOMETHING GOES WRONG, HERE ARE THE AFFECTED USERS: ', JSON.stringify(res.channel.members))
+        console.log('IN CASE SOMETHING GOES WRONG, HERE ARE THE AFFECTED USERS: ', action.name, channelId, JSON.stringify(res.channel.members))
         userPromises = res.channel.members.map(action);
         return Promise.all(userPromises).then(() => {
             return userPromises.length;

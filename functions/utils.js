@@ -9,6 +9,7 @@ const SLACK_API = "https://slack.com/api";
 const TIMEZONE_MS_OFFSET = 6*60*60*1000;
 const SUCCESS = "ER_SUCCESS_MATCH";
 const NOT_FOUND = "ER_SUCCESS_NO_MATCH";
+const HELP_TEXT = 'You can say send a message, how many members do we have, do not disturb on or off, make a transcription, how many messages do i have, or kick users'
 
 function fetchSlackEndpoint(endpoint, body){
     let bodyData = [
@@ -20,7 +21,6 @@ function fetchSlackEndpoint(endpoint, body){
         });
         bodyData = bodyData.join("&");
     }
-    console.log(`${SLACK_API}/${endpoint}`, bodyData);
     return fetch(`${SLACK_API}/${endpoint}`, {
         body: bodyData,
         headers: {
@@ -73,7 +73,7 @@ function getSlotFromResponse(slots, key){
     return null;
 }
 
-// AWS HELPERS
+// AWS  HELPERS
 function sendSns(options) {
     console.log('sending: ', JSON.stringify(options));
     return new Promise((resolve, reject) => {
@@ -143,9 +143,12 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
             text: output,
         },
         card: {
-            type: 'Simple',
-            title: `Denver Devs - Alexa`,
-            content: output,
+            type: 'Standard',
+            title: title || "Denver Devs - Alexa",
+            text: output,
+            image: {
+                smallImageUrl: "https://avatars2.githubusercontent.com/u/11462380?v=4&s=300"
+            }
         },
         reprompt: {
             outputSpeech: {
@@ -157,6 +160,30 @@ function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
     };
 }
 
+
+function secretResponse(){
+    return {
+        outputSpeech: {
+            type: 'SSML',
+            ssml:   "<speak><amazon:effect name='whispered'>Burn it <emphasis level='strong'>all</emphasis> down</amazon:effect><audio src='https://s3.amazonaws.com/dd-transcripts/tyrion.mp3' /></speak>",
+        },
+        card: {
+            type: 'Standard',
+            title: "🔥🔥🔥🔥🔥🔥🔥🔥🔥",
+            text: "🔥🔥🔥 Burn it all down! 🔥🔥🔥",
+            image: {
+                smallImageUrl: "https://avatars2.githubusercontent.com/u/11462380?v=4&s=300"
+            }
+        },
+        reprompt: {
+            outputSpeech: {
+                type: 'PlainText',
+                text: null,
+            },
+        },
+        shouldEndSession: true
+    };
+}
 
 
 function buildResponse(sessionAttributes, speechletResponse) {
@@ -171,15 +198,13 @@ function getWelcomeResponse(callback) {
     // If we wanted to initialize the session to have some attributes we could add those here.
     const sessionAttributes = {};
     const cardTitle = 'Welcome';
-    const speechOutput = 'Welcome to Denver Devs Alexa, say help for a list of commands';
+    const speechOutput = 'Welcome to Denver Devs Alexa. How can I help?';
     // If the user either does not reply to the welcome message or says something that is not
     // understood, they will be prompted again with this text.
-    const repromptText = 'Please give me a command, ' +
-        'You can say: Send a Message, Get Channel Info, Do not disturb on, or Do not disturb off';
     const shouldEndSession = false;
 
     callback(sessionAttributes,
-        buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
+        buildSpeechletResponse(cardTitle, speechOutput, HELP_TEXT, shouldEndSession));
 }
 
 function handleSessionEndRequest(callback) {
@@ -193,7 +218,7 @@ function handleSessionEndRequest(callback) {
 
 
 function handleError(intent, session, callback) {
-    let outputText = "There was a problem the request. Please Try Again";
+    let outputText = "There was a problem with the request. Please Try Again";
     callback({}, buildSpeechletResponse(intent.name, outputText, null, true));
     return Promise.reject();
 }
@@ -218,8 +243,8 @@ function onLaunch(launchRequest, session, callback) {
     getWelcomeResponse(callback);
 }
 
-function listCommands(callback) {
-    let outputText = "You can say 'Send an at channel', 'How many members are there', 'How many unread messages do I have', 'save a transcript', or 'kick everyone from channel'";
+function listCommands(intent, session, callback) {
+    let outputText = HELP_TEXT;
     callback({}, buildSpeechletResponse(intent.name, outputText, null, true));
 }
 /**
@@ -238,6 +263,7 @@ module.exports = {
     getWelcomeResponse,
     buildResponse,
     buildSpeechletResponse,
+    secretResponse,
     handleSessionEndRequest,
     listCommands,
     onSessionEnded,
@@ -246,5 +272,5 @@ module.exports = {
     sendSns,
     parseSns,
     getSlotFromResponse,
-    convertUTCtoMountain    
+    convertUTCtoMountain 
 }

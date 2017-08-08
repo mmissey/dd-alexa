@@ -8,7 +8,7 @@ let stats = {
 	users: 0
 };
 function handleEvent (event, context, callback) {
-	console.log(event)
+	console.log(JSON.stringify(event))
 	let options = utils.parseSns(event) || event;
 	console.log(options);
 	const channelId = options.channel_id;
@@ -68,7 +68,6 @@ function getUserInfo(userId){
 
 function parseMessages(messages) {
 	let messagesHTML = [];
-	console.log("messages:", messages)
 	if(!messages || !messages.length) {
 		return Promise.reject();
 	}
