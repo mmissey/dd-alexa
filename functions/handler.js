@@ -193,7 +193,7 @@ function handleTheBurn(intent, session, callback){
         ":fire::fire::fire::fire:*This channel is going down!!!!*:fire::fire::fire::fire:\n" +
         ":spacer::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire:\n" +
         ":spacer::spacer::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire::fire:", channel, process.env.SLACK_USERNAME).then(() => {
-            performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId));
+            return performOnAllUsersInChannel(channelId, kickUserFromChannel.bind(this, channelId));
         }).then(()=> {
             archiveChannel(channelId);
         });

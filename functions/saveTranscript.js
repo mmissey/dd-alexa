@@ -34,7 +34,7 @@ function getChannelMessages(options) {
 	})).then((data) => {
 		return parseMessages(data && data.messages).then((messagesHTML) => {
 			let htmlString = 	"<html>" +
-									"<head><link rel='stylesheet' type='text/css' href='styles.css'></head>" +
+									"<head><meta charset='UTF-8'><link rel='stylesheet' type='text/css' href='styles.css'></head>" +
 										messagesHTML +
 								"</html>";
 

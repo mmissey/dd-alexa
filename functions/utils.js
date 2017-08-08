@@ -114,6 +114,7 @@ function writeHTMLtoS3(filename, html) {
             Key: filename,
             ContentType: 'text/html',
             Body: html,
+            Encoding: "UTF-8",
             ACL: 'public-read'
         }, (err, data) => {
             if (err) {
