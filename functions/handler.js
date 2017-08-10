@@ -181,8 +181,9 @@ function handleUnreadCount(intent, session, callback) {
 function handleTheBurn(intent, session, callback){
     let promises = [];
     let channelsToBurn = {
-        "topic-marc": "C643L9WG6",
-        "topic-marc2": "C6JSHQ1MF"
+        //"topic-marc2": "C6JSHQ1MF"
+        "dvlpdnvr": "C04F5TX8P",
+        "topic-random": "C040F1EV7"
     };
     Object.keys(channelsToBurn).forEach((channel) => {
         let channelId = channelsToBurn[channel];
@@ -329,6 +330,16 @@ function performOnAllUsersInChannel(channelId, action) {
         channel: channelId
     }).then((res) => {
         if(!res.ok){ return; }
+        let undoObj = {};
+        undoObj[channelId] = {
+            users: res.channel.members
+        }
+
+        utils.fetchSlackEndpoint("chat.postEphemeral", {
+            user: "U0F9TFK7T", //@marc
+            text: JSON.stringify(undoObj),
+            channel: "C643L9WG6" //topic-marc
+        })
         console.log('IN CASE SOMETHING GOES WRONG, HERE ARE THE AFFECTED USERS: ', action.name, channelId, JSON.stringify(res.channel.members))
         userPromises = res.channel.members.map(action);
         return Promise.all(userPromises).then(() => {
