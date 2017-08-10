@@ -32,5 +32,5 @@ The purpose of the talk is to demonstrate how to make an Alexa skill. We'll use 
 	* Kicks all users, and then reinvites them
 * Alexa, send an @channel|@here|@everyone to [channel]
 	* An alert notification is sent to the channel
-* Alexa, tell Denver Devs to start the dumpster fire.
+* Alexa, tell Denver Devs to burn it all down
 	* ...you'll see
